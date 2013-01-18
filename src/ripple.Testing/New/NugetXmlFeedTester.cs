@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Diagnostics;
+using NUnit.Framework;
 using ripple.New;
 using System.Linq;
 using FubuTestingSupport;
@@ -29,7 +30,7 @@ namespace ripple.Testing.New
 
             nuget.Name.ShouldEqual("FubuMVC.Core");
             nuget.Version.Version.ToString().ShouldEqual("1.0.0.1402");
-            nuget.Url.ShouldEqual("http://build.fubu-project.org/guestAuth/app/nuget/v1/FeedService.svc/Packages(Id='FubuMVC.Core',Version='1.0.0.1402')");
+            nuget.Url.ShouldEqual("http://build.fubu-project.org/guestAuth/repository/download/bt3/12671:id/FubuMVC.Core.1.0.0.1402.nupkg");
             nuget.Filename.ShouldEqual("FubuMVC.Core.1.0.0.1402.nupkg");
         }
     }

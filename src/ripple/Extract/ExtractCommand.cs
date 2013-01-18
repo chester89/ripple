@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using System.Xml;
 using FubuCore;
 using FubuCore.CommandLine;
+using ripple.New;
+using System.Collections.Generic;
 
 namespace ripple.Extract
 {
@@ -18,48 +23,21 @@ namespace ripple.Extract
             system.DeleteDirectory(input.Directory);
             system.CreateDirectory(input.Directory);
 
-            var document = loadListOfNugets(input);
-            foreach (XmlElement element in document.DocumentElement.ChildNodes)
-            {
-                if (element.Name == "entry")
-                {
-                    var feed = feedFor(element);
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
 
-                    feed.DownloadTo(input.Directory);
-
-                    Console.WriteLine(feed);
-                }
-            }
+            var feed = new FloatingFeed(input.FeedFlag);
 
 
+            var remoteNugets = feed.GetLatest().ToList();
+            var i = 0;
+
+            remoteNugets.Each(nuget => {
+                nuget.DownloadTo(input.Directory);
+                Console.WriteLine("Finished {0} of {1}", i++, remoteNugets.Count);
+            });
 
             return true;
-        }
-
-        public NugetFeed feedFor(XmlNode node)
-        {
-            foreach ( XmlElement element in node.ChildNodes)
-            {
-                if (element.Name == "content")
-                {
-                    var url = element.GetAttribute("src");
-                    return new NugetFeed(url);
-                }
-            }
-
-            throw new NotImplementedException("I can't find anything here --> \n\n" + node.OuterXml);
-        }
-
-        private static XmlDocument loadListOfNugets(ExtractInput input)
-        {
-            var url = input.FeedFlag.TrimEnd('/') + Command + input.MaxFlag;
-            var client = new WebClient();
-            var text = client.DownloadString(url);
-
-            var document = new XmlDocument();
-            document.LoadXml(text);
-
-            return document;
         }
     }
 }
