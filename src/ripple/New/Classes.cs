@@ -4,32 +4,11 @@ using System.IO;
 using System.Net;
 using System.Xml;
 using NuGet;
+using System.Linq;
+using FubuCore;
 
 namespace ripple.New
 {
-    public interface INugetFile
-    {
-        string Name { get; }
-        SemanticVersion Version { get; }
-        IPackage ExplodeTo(string directory);
-    }
-
-    public class NugetFile : INugetFile
-    {
-        private readonly string _filename;
-
-        public NugetFile(string filename)
-        {
-            _filename = filename;
-        }
-
-        public string Name { get; private set; }
-        public SemanticVersion Version { get; private set; }
-        public IPackage ExplodeTo(string directory)
-        {
-            throw new NotImplementedException();
-        }
-    }
 
     public interface IFloatingFeed : INugetFeed
     {
@@ -105,4 +84,68 @@ namespace ripple.New
 
         INugetFile Find(NugetQuery query);
     }
+
+    public class NugetFolderCache : INugetCache
+    {
+        private readonly string _folder;
+
+        public NugetFolderCache(string folder)
+        {
+            _folder = folder;
+        }
+
+        public void UpdateAll(IEnumerable<IRemoteNuget> nugets)
+        {
+            throw new NotImplementedException();
+        }
+
+        public INugetFile Latest(NugetQuery query)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Flush()
+        {
+            throw new NotImplementedException();
+        }
+
+        public INugetFile Find(NugetQuery query)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public interface INugetFile
+    {
+        string Name { get; }
+        SemanticVersion Version { get; }
+        IPackage ExplodeTo(string directory);
+    }
+
+    public class NugetFile : INugetFile
+    {
+        private readonly string _path;
+
+        public NugetFile(string path)
+        {
+            _path = path;
+
+            var file = Path.GetFileNameWithoutExtension(path);
+            var parts = file.Split('.');
+            Name = parts.First();
+            Version = SemanticVersion.Parse(parts.Skip(1).Join("."));
+
+            IsPreRelease = Version.SpecialVersion.IsNotEmpty();
+        }
+
+        public string Name { get; private set; }
+        public SemanticVersion Version { get; private set; }
+        public bool IsPreRelease { get; private set; }
+
+        public IPackage ExplodeTo(string directory)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
 }
