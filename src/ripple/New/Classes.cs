@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Net;
+using System.Reflection;
 using System.Xml;
-using NuGet;
-using System.Linq;
-using FubuCore;
 
 namespace ripple.New
 {
@@ -114,38 +112,4 @@ namespace ripple.New
             throw new NotImplementedException();
         }
     }
-
-    public interface INugetFile
-    {
-        string Name { get; }
-        SemanticVersion Version { get; }
-        IPackage ExplodeTo(string directory);
-    }
-
-    public class NugetFile : INugetFile
-    {
-        private readonly string _path;
-
-        public NugetFile(string path)
-        {
-            _path = path;
-
-            var file = Path.GetFileNameWithoutExtension(path);
-            var parts = file.Split('.');
-            Name = parts.First();
-            Version = SemanticVersion.Parse(parts.Skip(1).Join("."));
-
-            IsPreRelease = Version.SpecialVersion.IsNotEmpty();
-        }
-
-        public string Name { get; private set; }
-        public SemanticVersion Version { get; private set; }
-        public bool IsPreRelease { get; private set; }
-
-        public IPackage ExplodeTo(string directory)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
 }

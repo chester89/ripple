@@ -1,7 +1,9 @@
-﻿using NUnit.Framework;
+﻿using FubuCore;
+using NUnit.Framework;
 using NuGet;
 using ripple.New;
 using FubuTestingSupport;
+using System.Linq;
 
 namespace ripple.Testing.New
 {
@@ -24,6 +26,20 @@ namespace ripple.Testing.New
             file.Name.ShouldEqual("Bottles");
             file.Version.ShouldEqual(SemanticVersion.Parse("1.0.0.441-alpha"));
             file.IsPreRelease.ShouldBeTrue();
+        }
+
+        [Test]
+        public void explode_smoke_test()
+        {
+            var file = new NugetFile("Bottles.1.0.0.441.nupkg");
+            var system = new FileSystem();
+            system.CreateDirectory("bottles");
+            system.CleanDirectory("bottles");
+
+            var package = file.ExplodeTo("bottles");
+
+            package.ShouldNotBeNull();
+            package.AssemblyReferences.Single().Name.ShouldEqual("Bottles.dll");
         }
     }
 }

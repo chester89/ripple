@@ -93,6 +93,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Bottles.1.0.0.441.nupkg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="data\bottles\packaging\nuget\bottles.deployers.iis.nuspec" />
     <None Include="data\bottles\packaging\nuget\bottles.deployers.topshelf.nuspec" />
     <None Include="data\bottles\packaging\nuget\bottles.deployment.nuspec" />
