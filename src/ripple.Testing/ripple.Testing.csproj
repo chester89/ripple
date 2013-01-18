@@ -74,6 +74,8 @@
     <Compile Include="MakeTestData.cs" />
     <Compile Include="Model\NuspecDocumentTester.cs" />
     <Compile Include="Model\SolutionConfigTester.cs" />
+    <Compile Include="New\NugetXmlFeedTester.cs" />
+    <Compile Include="New\RemoteNugetTester.cs" />
     <Compile Include="NugetDependencyTester.cs" />
     <Compile Include="NugetSpecTester.cs" />
     <Compile Include="Nuget\PackageRepositoryBuilderTester.cs" />
@@ -166,6 +168,12 @@
   <ItemGroup>
     <Folder Include="data\junk1\" />
     <Folder Include="data\junk2\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="feed.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
