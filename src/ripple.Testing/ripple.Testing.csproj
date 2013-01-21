@@ -74,6 +74,7 @@
     <Compile Include="MakeTestData.cs" />
     <Compile Include="Model\NuspecDocumentTester.cs" />
     <Compile Include="Model\SolutionConfigTester.cs" />
+    <Compile Include="New\NugetFeedSmokeTester.cs" />
     <Compile Include="New\NugetFileTester.cs" />
     <Compile Include="New\NugetXmlFeedTester.cs" />
     <Compile Include="New\RemoteNugetTester.cs" />

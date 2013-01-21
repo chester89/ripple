@@ -102,6 +102,7 @@
     <Compile Include="New\Classes.cs" />
     <Compile Include="New\INugetFile.cs" />
     <Compile Include="New\IRemoteNuget.cs" />
+    <Compile Include="New\NugetFeed.cs" />
     <Compile Include="New\NugetFile.cs" />
     <Compile Include="New\NugetXmlFeed.cs" />
     <Compile Include="New\RemoteNuget.cs" />

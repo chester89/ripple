@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Xml;
+using FubuCore;
+using System.Linq;
 
 namespace ripple.New
 {
@@ -60,6 +62,7 @@ namespace ripple.New
         IRemoteNuget FindLatest(NugetQuery query);
     }
 
+
     public enum NugetStability
     {
         ReleasedOnly,
@@ -68,9 +71,19 @@ namespace ripple.New
 
     public class NugetQuery
     {
+        public NugetQuery()
+        {
+            Stability = NugetStability.Anything;
+        }
+
         public string Name { get; set; }
         public string Version { get; set; }
         public NugetStability Stability { get; set; }
+
+        public override string ToString()
+        {
+            return string.Format("Name: {0}, Version: {1}, Stability: {2}", Name, Version, Stability);
+        }
     }
 
     public interface INugetCache
@@ -104,8 +117,15 @@ namespace ripple.New
 
         public void Flush()
         {
-            throw new NotImplementedException();
+            new FileSystem().CleanDirectory(_folder);
         }
+
+        public IEnumerable<INugetFile> AllFiles()
+        {
+            return
+                new FileSystem().FindFiles(_folder, new FileSet {Include = "*.nupkg"})
+                                .Select(file => new NugetFile(file));
+        } 
 
         public INugetFile Find(NugetQuery query)
         {
