@@ -7,10 +7,17 @@ namespace ripple.New
     public class NugetFeed : INugetFeed
     {
         private readonly IPackageRepository _repository;
+        private readonly string _url;
 
         public NugetFeed(string url)
         {
-            _repository = new PackageRepositoryFactory().CreateRepository(url);
+            _url = url.TrimEnd('/');
+            _repository = new PackageRepositoryFactory().CreateRepository(_url);
+        }
+
+        public string Url
+        {
+            get { return _url; }
         }
 
         public IRemoteNuget Find(NugetQuery query)
