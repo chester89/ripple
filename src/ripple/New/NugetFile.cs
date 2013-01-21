@@ -17,7 +17,10 @@ namespace ripple.New
             var file = Path.GetFileNameWithoutExtension(path);
             var parts = file.Split('.');
             Name = parts.First();
-            Version = SemanticVersion.Parse(parts.Skip(1).Join("."));
+
+            var versionParts = parts.Reverse().Take(4).Reverse().ToList();
+
+            Version = SemanticVersion.Parse(versionParts.Join("."));
 
             IsPreRelease = Version.SpecialVersion.IsNotEmpty();
         }

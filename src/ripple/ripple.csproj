@@ -100,12 +100,15 @@
     <Compile Include="MSBuild\ReferenceAttacher.cs" />
     <Compile Include="MSBuild\ReferenceStatus.cs" />
     <Compile Include="New\Classes.cs" />
+    <Compile Include="New\INugetDownloader.cs" />
     <Compile Include="New\INugetFile.cs" />
     <Compile Include="New\IRemoteNuget.cs" />
     <Compile Include="New\NugetFeed.cs" />
     <Compile Include="New\NugetFile.cs" />
     <Compile Include="New\NugetXmlFeed.cs" />
     <Compile Include="New\RemoteNuget.cs" />
+    <Compile Include="New\RemotePackageDownloader.cs" />
+    <Compile Include="New\UrlNugetDownloader.cs" />
     <Compile Include="Nuget\INugetService.cs" />
     <Compile Include="Nuget\NugetService.cs" />
     <Compile Include="Nuget\PackageRepositoryBuilder.cs" />
