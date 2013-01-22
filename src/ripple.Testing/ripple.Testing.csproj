@@ -76,6 +76,7 @@
     <Compile Include="Model\SolutionConfigTester.cs" />
     <Compile Include="New\NugetFeedSmokeTester.cs" />
     <Compile Include="New\NugetFileTester.cs" />
+    <Compile Include="New\NugetFolderCacheTester.cs" />
     <Compile Include="New\NugetXmlFeedTester.cs" />
     <Compile Include="New\RemoteNugetTester.cs" />
     <Compile Include="NugetDependencyTester.cs" />

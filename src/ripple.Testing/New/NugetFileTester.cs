@@ -20,6 +20,15 @@ namespace ripple.Testing.New
         }
 
         [Test]
+        public void build_a_nuget_file_by_file_name_complex()
+        {
+            var file = new NugetFile(@"c:\nugets\Bottles.Tools.1.0.0.441.nupkg");
+            file.Name.ShouldEqual("Bottles.Tools");
+            file.Version.ShouldEqual(SemanticVersion.Parse("1.0.0.441"));
+            file.IsPreRelease.ShouldBeFalse();
+        }
+
+        [Test]
         public void build_a_nuget_file_by_file_name_for_alpha()
         {
             var file = new NugetFile(@"c:\nugets\Bottles.1.0.0.441-alpha.nupkg");

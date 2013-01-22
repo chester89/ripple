@@ -16,7 +16,7 @@ namespace ripple.New
 
             var file = Path.GetFileNameWithoutExtension(path);
             var parts = file.Split('.');
-            Name = parts.First();
+            Name = parts.Reverse().Skip(4).Reverse().Join(".");
 
             var versionParts = parts.Reverse().Take(4).Reverse().ToList();
 
@@ -28,6 +28,11 @@ namespace ripple.New
         public string Name { get; private set; }
         public SemanticVersion Version { get; private set; }
         public bool IsPreRelease { get; private set; }
+
+        public override string ToString()
+        {
+            return string.Format("Name: {0}, Version: {1}, IsPreRelease: {2}", Name, Version, IsPreRelease);
+        }
 
         public IPackage ExplodeTo(string directory)
         {

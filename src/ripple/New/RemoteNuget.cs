@@ -35,6 +35,11 @@ namespace ripple.New
             return _downloader.DownloadTo(file);
         }
 
+        public override string ToString()
+        {
+            return string.Format("Name: {0}, Version: {1}", Name, Version);
+        }
+
         public string Filename
         {
             get
