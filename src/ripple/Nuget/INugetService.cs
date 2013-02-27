@@ -12,5 +12,7 @@ namespace ripple.Nuget
         void RemoveFromFileSystem(NugetDependency dependency);
         void Update(Project project, IEnumerable<NugetDependency> dependencies);
         void RemoveFromProject(Project project, IEnumerable<NugetDependency> dependencies);
+        bool DoesPackageHaveAVersion(string packageId, string version);
+        bool DoesPackageExist(string packageId);
     }
 }

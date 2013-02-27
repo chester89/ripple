@@ -19,9 +19,12 @@ namespace ripple.Nuget
         private readonly IPackageRepository _remoteRepository;
         private readonly IPackageRepository _localRepository;
         private readonly IPackageRepository _sourceRepository;
+        private IPackageLookup lookup;
+        private IServiceBasedRepository serviceBasedRepository;
 
         private readonly PhysicalFileSystem _fileSystem;
         private readonly PackageManager _packageManager;
+
         private readonly Console _console;
         private readonly DefaultPackagePathResolver _pathResolver;
         private readonly Cache<NugetDependency, IPackage> _packages;
@@ -29,8 +32,11 @@ namespace ripple.Nuget
         public NugetService(Solution solution, IEnumerable<string> remoteFeeds)
         {
             var repoBuilder = new PackageRepositoryBuilder();
-
-            _remoteRepository = repoBuilder.BuildRemote(remoteFeeds);
+            
+            var aggregateRepository = repoBuilder.BuildRemote(remoteFeeds);
+            lookup = aggregateRepository as IPackageLookup;
+            serviceBasedRepository = aggregateRepository as IServiceBasedRepository;
+            _remoteRepository = aggregateRepository;
             _localRepository = repoBuilder.BuildLocal(solution.PackagesFolder());
             _sourceRepository = repoBuilder.BuildSource(_remoteRepository, _localRepository);
 
@@ -75,9 +81,8 @@ namespace ripple.Nuget
 
             var package = _localRepository.FindPackage(dependency.Name, new SemanticVersion(dependency.Version));
 
-            if (package != null) _localRepository.RemovePackage(package);
-
-
+            if (package != null) 
+                _localRepository.RemovePackage(package);
         }
 
         public void Update(Project project, IEnumerable<NugetDependency> dependencies)
@@ -136,6 +141,16 @@ namespace ripple.Nuget
                     document.Save(project.PackagesFile());
                 }
             });
+        }
+
+        public bool DoesPackageHaveAVersion(string packageId, string version)
+        {
+            return lookup.Exists(packageId, new SemanticVersion(version));
+        }
+
+        public bool DoesPackageExist(string packageId)
+        {
+            return serviceBasedRepository.FindPackagesById(packageId).Any();
         }
     }
 }

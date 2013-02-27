@@ -48,7 +48,6 @@ namespace ripple.Commands
     {
         private Func<NugetDependency, bool> _nugetDependencyFilter = dep => true;
 
-
         public override bool Execute(ListInput input)
         {
             input.NugetFlag.IfNotNull(x => _nugetDependencyFilter = dep => dep.Name == x);
