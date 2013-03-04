@@ -37,8 +37,6 @@ namespace ripple.Model
                 readProjects(config.GetSolutionFolder(directory), system, solution);
                 readNugetSpecs(directory, config, system, solution);
 
-
-
                 return solution;
             }
             catch (Exception)

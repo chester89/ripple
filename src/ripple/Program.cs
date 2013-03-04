@@ -34,6 +34,4 @@ namespace ripple
             return success ? 0 : 1;
         }
     }
-
-
 }

@@ -77,8 +77,7 @@ namespace ripple.Nuget
         {
             ConsoleWriter.PrintHorizontalLine();
             ConsoleWriter.Write(ConsoleColor.Cyan, "Removing " + dependency);
-
-
+            
             var package = _localRepository.FindPackage(dependency.Name, new SemanticVersion(dependency.Version));
 
             if (package != null) 
@@ -148,9 +147,9 @@ namespace ripple.Nuget
             return lookup.Exists(packageId, new SemanticVersion(version));
         }
 
-        public bool DoesPackageExist(string packageId)
+        public IPackage FindPackage(string packageId, SemanticVersion version)
         {
-            return serviceBasedRepository.FindPackagesById(packageId).Any();
+            return serviceBasedRepository.FindPackagesById(packageId).FirstOrDefault(x => x.Version == version);
         }
     }
 }

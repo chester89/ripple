@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml.Linq;
 using FubuCore;
 using System.Linq;
 using ripple.Commands;
@@ -13,7 +14,8 @@ namespace ripple.Local
         public static readonly string PackagesConfig = "packages.config";
         private readonly string _directory;
         private readonly string _projectName;
-        private readonly Lazy<CsProjFile> _csProjFile; 
+        private readonly Lazy<CsProjFile> _csProjFile;
+        private readonly string targetFramework;
 
         public static Project ReadFrom(string file)
         {
@@ -30,9 +32,7 @@ namespace ripple.Local
             {
                 project._nugetDependencies.AddRange(NugetDependency.ReadFrom(packagesFile));
             }
-
             
-
             return project;
         }
 
@@ -41,6 +41,10 @@ namespace ripple.Local
             ProjectFile = filename;
             _directory = Path.GetDirectoryName(filename);
             _projectName = _directory.Split(Path.DirectorySeparatorChar).Last();
+            var projectFile = XDocument.Load(ProjectFile);
+
+            targetFramework = projectFile.Root.DescendantsWithLocalName("PropertyGroup").FirstOrDefault(x => x.DescendantsWithLocalName("Configuration").Any())
+                .DescendantsWithLocalName("TargetFrameworkVersion").FirstOrDefault().Value.Replace("v", string.Empty);
 
             _csProjFile = new Lazy<CsProjFile>(() => new CsProjFile(filename));
         }
@@ -48,6 +52,11 @@ namespace ripple.Local
         public CsProjFile CsProjFile
         {
             get { return _csProjFile.Value; }
+        }
+
+        public string TargetFramework
+        {
+            get { return targetFramework; }
         }
 
         public string ProjectFile { get; private set; }

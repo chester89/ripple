@@ -54,7 +54,7 @@
     <Compile Include="Commands\CleanCommand.cs" />
     <Compile Include="Commands\CLIRunner.cs" />
     <Compile Include="Commands\CsProjFile.cs" />
-    <Compile Include="Commands\EnforcePackageVersionCommand.cs" />
+    <Compile Include="Commands\EnforceCommand.cs" />
     <Compile Include="Commands\Samples\ExtractSampleCommand.cs" />
     <Compile Include="Commands\FloatCommand.cs" />
     <Compile Include="Commands\FloCommand.cs" />
@@ -124,6 +124,7 @@
     <Compile Include="Model\SolutionConfig.cs" />
     <Compile Include="Model\SolutionGraph.cs" />
     <Compile Include="Model\SolutionGraphBuilder.cs" />
+    <Compile Include="XElementExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
