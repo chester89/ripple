@@ -15,7 +15,8 @@ namespace ripple.Local
         private readonly string _directory;
         private readonly string _projectName;
         private readonly Lazy<CsProjFile> _csProjFile;
-        private readonly string targetFramework;
+        private readonly string targetFrameworkVersion;
+        private readonly string targetFrameworkProfile;
 
         public static Project ReadFrom(string file)
         {
@@ -43,8 +44,10 @@ namespace ripple.Local
             _projectName = _directory.Split(Path.DirectorySeparatorChar).Last();
             var projectFile = XDocument.Load(ProjectFile);
 
-            targetFramework = projectFile.Root.DescendantsWithLocalName("PropertyGroup").FirstOrDefault(x => x.DescendantsWithLocalName("Configuration").Any())
-                .DescendantsWithLocalName("TargetFrameworkVersion").FirstOrDefault().Value.Replace("v", string.Empty);
+            targetFrameworkVersion = projectFile.Root.DescendantsWithLocalName("PropertyGroup").FirstOrDefault(x => x.DescendantsWithLocalName("Configuration").Any())
+                .DescendantsWithLocalName("TargetFrameworkVersion").FirstOrDefault().Value.Replace("v", string.Empty).Replace(".", string.Empty);
+            var targetFrameworkProfileNode = projectFile.Root.DescendantsWithLocalName("PropertyGroup").FirstOrDefault(x => x.DescendantsWithLocalName("Configuration").Any()).DescendantsWithLocalName("TargetFrameworkProfile").FirstOrDefault();
+            targetFrameworkProfile = targetFrameworkProfileNode == null? string.Empty: targetFrameworkProfileNode.Value;
 
             _csProjFile = new Lazy<CsProjFile>(() => new CsProjFile(filename));
         }
@@ -54,9 +57,14 @@ namespace ripple.Local
             get { return _csProjFile.Value; }
         }
 
-        public string TargetFramework
+        public string TargetFrameworkVersion
         {
-            get { return targetFramework; }
+            get { return targetFrameworkVersion; }
+        }
+
+        public string TargetFrameworkProfile
+        {
+            get { return targetFrameworkProfile; }
         }
 
         public string ProjectFile { get; private set; }

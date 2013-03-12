@@ -130,8 +130,6 @@ namespace ripple.Model
             {
                 _projects.Each(p => p.Clean(fileSystem));    
             }
-
-            
         }
 
         public NugetDependency GetLatestNugetOf(string nugetName)
