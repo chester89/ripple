@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -8,6 +9,7 @@ using System.Xml.Linq;
 using FubuCore.CommandLine;
 using NuGet;
 using ripple.Local;
+using ripple.Nuget;
 
 namespace ripple.Commands
 {
@@ -16,13 +18,14 @@ namespace ripple.Commands
         public string PackageId { get; set; }
         public string DesiredVersion { get; set; }
         //[Description("use this one if you want diagnostics messages to show up")]
-        //[FlagAlias("verbose", 'v')]
-        //public string Verbose { get; set; }
+        //public string VerboseFlag { get; set; }
     }
 
     [CommandDescription("changes all versions of a package across whole solution to the one provided")]
     public class EnforceCommand: FubuCommand<EnforceInput>
     {
+        private string hintPathAttributeName = "HintPath";
+        private string referenceNodeName = "Reference";
         const string packagesNodeName = "packages";
         const string packageAttributeName = "package";
         const string versionAttributeName = "version";
@@ -40,28 +43,21 @@ namespace ripple.Commands
                     input.FindSolutions().Each(solution =>
                     {
                         int counter = 0;
-                        solution.Projects.Each(proj =>
+                        solution.Projects.Where(pr => pr.NugetDependencies.Any(nd => nd.Name == input.PackageId)).Each(proj =>
                         {
                             if (File.Exists(proj.PackagesFile()))
                             {
-                                var nugets = NugetDependency.ReadFrom(proj.PackagesFile());
-                                var oldVersionNumber = string.Empty;
+                                //0. edit the packages.config file
+                                var configDocument = XDocument.Load(proj.PackagesFile());
+                                var packageNode = configDocument.Descendants(packagesNodeName).SingleOrDefault()
+                                    .Descendants(packageAttributeName).SingleOrDefault(el => el.Attribute("id").Value == input.PackageId);
+                                var oldVersionNumber = packageNode.Attribute(versionAttributeName).Value;
+                                projectToOldPackageVersion.Add(proj, oldVersionNumber);
+                                packageNode.Attribute(versionAttributeName).Value = input.DesiredVersion;
 
-                                if (nugets.Any(x => x.Name == input.PackageId))
-                                {
-                                    //0. edit the packages.config file
-                                    var configDocument = XDocument.Load(proj.PackagesFile());
-                                    var packageNode = configDocument.Descendants(packagesNodeName).SingleOrDefault()
-                                        .Descendants(packageAttributeName).SingleOrDefault(el => el.Attribute("id").Value == input.PackageId);
-                                    textWriter.WriteLine("Editing package version");
-                                    oldVersionNumber = packageNode.Attribute(versionAttributeName).Value;
-                                    projectToOldPackageVersion.Add(proj, oldVersionNumber);
-                                    packageNode.Attribute(versionAttributeName).Value = input.DesiredVersion;
-
-                                    configDocument.Save(proj.PackagesFile());
-                                    counter++;
-                                    textWriter.WriteLine("Project {0} packages.config - successfully changed {1} from version {2} to {3}", proj.ProjectName, input.PackageId, oldVersionNumber, input.DesiredVersion);
-                                }
+                                configDocument.Save(proj.PackagesFile());
+                                counter++;
+                                textWriter.WriteLine("Project {0} packages.config - successfully changed {1} from version {2} to {3}", proj.ProjectName, input.PackageId, oldVersionNumber, input.DesiredVersion);
                             }
                         });
 
@@ -69,61 +65,65 @@ namespace ripple.Commands
                         var binaryDirectories = Directory.EnumerateDirectories(solution.PackagesFolder(), input.PackageId + ".?.?.*");
                         if (binaryDirectories.Any())
                         {
-                            textWriter.WriteLine("Found these package directories: {0}", string.Join("; ", binaryDirectories));
                             foreach (var binaryDirectory in binaryDirectories)
                             {
                                 Directory.Delete(binaryDirectory, true);
-                                textWriter.WriteLine("Deleted {0}", binaryDirectory);
                             }
                         }
 
                         new RestoreCommand().Execute(new RestoreInput());
 
-                        solution.Projects.Each(proj =>
+                        var repoBuilder = new PackageRepositoryBuilder();
+                        var aggregateRepository = repoBuilder.BuildRemote(new [] { "http://packages.nuget.org/v1/FeedService.svc/", "http://nuget.org/api/v2" });
+                        var requiredPackageVersion = aggregateRepository.FindPackagesById(input.DesiredVersion).FirstOrDefault(x => x.Version == version);
+
+                        foreach (var assemblyReference in requiredPackageVersion.AssemblyReferences)
                         {
-                            //2. update .csproj file
-                            var relativePackagePathFormat = string.Format(@"{0}.{1}\lib\{2}{0}.dll", input.PackageId, input.DesiredVersion, "{0}");
-                            var referencePathForProjectFile = string.Empty;
-                            var targetFrameworkFormat = "{0}" + proj.TargetFrameworkVersion +
-                                (string.IsNullOrEmpty(proj.TargetFrameworkProfile) ? string.Empty : proj.TargetFrameworkProfile.ToLower()) + "\\";
-
-                            const string shortFrameworkName = "net";
-                            var frameworkSpecificPaths = new[] { shortFrameworkName, shortFrameworkName.ToLower() }.Select(x => string.Format(targetFrameworkFormat, x)).Concat(new[] { string.Empty });
-
-                            //at first - try all paths that include concrete target frameworks; then, as a fallback, go for lib folder
-                            foreach (var frameworkPathTail in frameworkSpecificPaths)
+                            solution.Projects.Where(pr => pr.NugetDependencies.Any(x => x.Name == input.PackageId)).Each(proj =>
                             {
-                                if (File.Exists(Path.Combine(solution.PackagesFolder(), string.Format(relativePackagePathFormat, frameworkPathTail))))
+                                var referencePathForProjectFile = assemblyReference.Path;
+
+                                var projectFile = XDocument.Load(proj.ProjectFile);
+                                var packageReferenceNode = projectFile.Root
+                                    .DescendantsWithLocalName("ItemGroup").FirstOrDefault(itemGroupNode => itemGroupNode.DescendantsWithLocalName(referenceNodeName).Any())
+                                    .DescendantsWithLocalName(referenceNodeName).SingleOrDefault(x => x.Attribute(includeAttributeName).Value.Contains(input.PackageId + ", ")
+                                        || x.Attribute(includeAttributeName).Value == input.PackageId);
+
+                                if (packageReferenceNode != null)
                                 {
-                                    referencePathForProjectFile = string.Format(relativePackagePathFormat, frameworkPathTail);
+                                    var oldIncludeAttributeValue = packageReferenceNode.Attribute(includeAttributeName).Value;
+
+                                    var versionTokens = oldIncludeAttributeValue.Split(new[] { ',' }).Skip(1).Select(x => x.Trim()).Where(s => s.StartsWith("Version")).ToList();
+                                    var oldVersionNumberAccordingToProjectFile = "SomethingMore";
+                                    if (versionTokens.Any())
+                                    {
+                                        oldVersionNumberAccordingToProjectFile = versionTokens.First().Split(new[] { '=' }).Last();
+                                    }
+
+                                    packageReferenceNode.Attribute(includeAttributeName).SetValue(oldIncludeAttributeValue.Replace(oldVersionNumberAccordingToProjectFile, input.DesiredVersion));
+                                    var hintPathElement = packageReferenceNode.DescendantsWithLocalName(hintPathAttributeName).SingleOrDefault();
+                                    hintPathElement.SetValue(@"..\packages\" + referencePathForProjectFile);
                                 }
-                            }
+                                else
+                                {
+                                    var referencesRoot = projectFile.Root.DescendantsWithLocalName("ItemGroup").FirstOrDefault(itemGroupNode => itemGroupNode.DescendantsWithLocalName(referenceNodeName).Any());
 
-                            //later refactor to CsProjFile.UpdatePackageReference(string packageId, string oldVersion, string newVersion) or smth like that
-                            var projectFile = XDocument.Load(proj.ProjectFile);
-                            var packageReferenceNode = projectFile.Root
-                                .DescendantsWithLocalName("ItemGroup").FirstOrDefault(itemGroupNode => itemGroupNode.DescendantsWithLocalName("Reference").Any())
-                                .DescendantsWithLocalName("Reference").SingleOrDefault(x => x.Attribute(includeAttributeName).Value.Contains(input.PackageId + ", ")
-                                    || x.Attribute(includeAttributeName).Value == input.PackageId);
-                            //change package version in the include attribute
-                            var oldIncludeAttributeValue = packageReferenceNode.Attribute(includeAttributeName).Value;
-                            //textWriter.WriteLine("HintPath element in {0} project has a value of {1}", proj.ProjectName, oldIncludeAttributeValue);
-                            var versionTokens = oldIncludeAttributeValue.Split(new [] {','}).Skip(1).Select(x => x.Trim()).Where(s => s.StartsWith("Version")).ToList();
-                            var oldVersionNumberAccordingToProjectFile = "SomethingMore";
-                            if (versionTokens.Any())
-                            {
-                                oldVersionNumberAccordingToProjectFile = versionTokens.First().Split(new [] {'='}).Last();
-                            }
+                                    var newReferenceNode = new XElement(referenceNodeName);
+                                    var assembly = Assembly.LoadFile(Path.Combine(solution.PackagesFolder(), assemblyReference.Path));
+                                    var cultureInfo = string.IsNullOrEmpty(assembly.GetName().CultureInfo.Name) ? "neutral" : assembly.GetName().CultureInfo.ToString();
+                                    var assemblyVersion = FileVersionInfo.GetVersionInfo(assembly.Location).FileVersion;
+                                    var keyToken = Convert.ToString(assembly.GetName().GetPublicKeyToken());
+                                    var processorArchitecture = assembly.GetName().ProcessorArchitecture.ToString();
+                                    newReferenceNode.SetAttributeValue(includeAttributeName, string.Format("{0}, Version={1}, Culture={2}, PublicKeyToken={3}, processorArchitecture={4}", 
+                                        assemblyReference.Name, assemblyVersion, cultureInfo, keyToken, processorArchitecture));
+                                    newReferenceNode.Add(new XElement(hintPathAttributeName, @"..\packages" + referencePathForProjectFile));
+                                    referencesRoot.Add(newReferenceNode);
+                                }
 
-                            //textWriter.WriteLine("Old version is {0}, to be substituted with {1}", oldVersionNumberAccordingToProjectFile, input.DesiredVersion);
-
-                            packageReferenceNode.Attribute(includeAttributeName).SetValue(oldIncludeAttributeValue.Replace(oldVersionNumberAccordingToProjectFile, input.DesiredVersion));
-                            //change package version in the HintPath element
-                            var hintPathElement = packageReferenceNode.DescendantsWithLocalName("HintPath").SingleOrDefault();
-                            hintPathElement.SetValue(@"..\packages\" + referencePathForProjectFile);
-                            projectFile.Save(proj.ProjectFile);
-                            textWriter.WriteLine("Successfully updated project reference in {0} project to {1} version of {2} package", proj.ProjectName, input.DesiredVersion, input.PackageId);
-                        });
+                                projectFile.Save(proj.ProjectFile);
+                                textWriter.WriteLine("Successfully updated project reference in {0} project to {1} version of {2} package", proj.ProjectName, input.DesiredVersion, input.PackageId);
+                            });
+                        }
 
                         if (counter == 0)
                         {
