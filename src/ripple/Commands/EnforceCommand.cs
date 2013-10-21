@@ -93,18 +93,18 @@ namespace ripple.Commands
 
                                 if (packageReferenceNode != null)
                                 {
-                                    var oldIncludeAttributeValue = packageReferenceNode.Attribute(includeAttributeName).Value;
+                                    //var oldIncludeAttributeValue = packageReferenceNode.Attribute(includeAttributeName).Value;
 
-                                    var versionTokens = oldIncludeAttributeValue.Split(new[] { ',' }).Skip(1).Select(x => x.Trim()).Where(s => s.StartsWith("Version")).ToList();
-                                    var oldVersionNumberAccordingToProjectFile = "SomethingMore";
-                                    if (versionTokens.Any())
-                                    {
-                                        oldVersionNumberAccordingToProjectFile = versionTokens.First().Split(new[] { '=' }).Last();
-                                    }
+                                    //var versionTokens = oldIncludeAttributeValue.Split(new[] { ',' }).Skip(1).Select(x => x.Trim()).Where(s => s.StartsWith("Version")).ToList();
+                                    //var oldVersionNumberAccordingToProjectFile = "SomethingMore";
+                                    //if (versionTokens.Any())
+                                    //{
+                                    //    oldVersionNumberAccordingToProjectFile = versionTokens.First().Split(new[] { '=' }).Last();
+                                    //}
 
-                                    packageReferenceNode.Attribute(includeAttributeName).SetValue(oldIncludeAttributeValue.Replace(oldVersionNumberAccordingToProjectFile, input.DesiredVersion));
+                                    //packageReferenceNode.Attribute(includeAttributeName).SetValue(oldIncludeAttributeValue.Replace(oldVersionNumberAccordingToProjectFile, input.DesiredVersion));
                                     var hintPathElement = packageReferenceNode.DescendantsWithLocalName(hintPathAttributeName).SingleOrDefault();
-                                    hintPathElement.SetValue(@"..\packages\" + referencePathForProjectFile);
+                                    hintPathElement.SetValue(@"..\packages\" + string.Format("{0}.{1}\\", input.PackageId, input.DesiredVersion) + referencePathForProjectFile);
                                 }
                                 else
                                 {
@@ -118,7 +118,7 @@ namespace ripple.Commands
                                     var processorArchitecture = assembly.GetName().ProcessorArchitecture.ToString();
                                     newReferenceNode.SetAttributeValue(includeAttributeName, string.Format("{0}, Version={1}, Culture={2}, PublicKeyToken={3}, processorArchitecture={4}", 
                                         assemblyReference.Name, assemblyVersion, cultureInfo, keyToken, processorArchitecture));
-                                    newReferenceNode.Add(new XElement(hintPathAttributeName, @"..\packages" + referencePathForProjectFile));
+                                    newReferenceNode.Add(new XElement(hintPathAttributeName, @"..\packages" + string.Format("{0}.{1}\\", input.PackageId, input.DesiredVersion) + referencePathForProjectFile));
                                     referencesRoot.Add(newReferenceNode);
                                 }
 
