@@ -36,9 +36,9 @@ namespace ripple.MSBuild
         {
             project = Project.ReadFrom(project.ProjectFile);
             var file = new CsProjFile(project.ProjectFile);
-            
 
-            project.NugetDependencies.Each(dep => {
+            project.NugetDependencies.Each(dep => 
+            {
                 var package = _packages[dep.Name];
                 if (package == null)
                 {
@@ -50,11 +50,7 @@ namespace ripple.MSBuild
                 if (assemblies == null) return;
 
                 file.AddAssemblies(dep, assemblies);
-
-
             });
-
-
         }   
     }
 }

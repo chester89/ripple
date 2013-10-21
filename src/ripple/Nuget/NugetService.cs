@@ -107,7 +107,7 @@ namespace ripple.Nuget
         {
             var projectSystem = new MSBuildProjectSystem(project.ProjectFile);
             var fileSystem = new PhysicalFileSystem(project.ProjectFile.ParentDirectory());
-            var sharedPackageRepository = new SharedPackageRepository(_pathResolver, fileSystem);
+            var sharedPackageRepository = new SharedPackageRepository(_pathResolver, fileSystem, fileSystem);
             var projectRepository = new PackageReferenceRepository(fileSystem, sharedPackageRepository);
 
             return new ProjectManager(_sourceRepository, _pathResolver, projectSystem, projectRepository){

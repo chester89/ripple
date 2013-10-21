@@ -15,17 +15,19 @@ namespace ripple.Commands
 {
     public class EnforceInput: SolutionInput
     {
-        public string PackageId { get; set; }
-        public string DesiredVersion { get; set; }
-        //[Description("use this one if you want diagnostics messages to show up")]
-        //public string VerboseFlag { get; set; }
+        [Description("Id of a package you want want to change version of")]
+        public String PackageId { get; set; }
+        [Description("Version to change to")]
+        public String DesiredVersion { get; set; }
+        [Description("use this one if you want diagnostics messages to show up")]
+        public Boolean VerboseFlag { get; set; }
     }
 
     [CommandDescription("changes all versions of a package across whole solution to the one provided")]
     public class EnforceCommand: FubuCommand<EnforceInput>
     {
-        private string hintPathAttributeName = "HintPath";
-        private string referenceNodeName = "Reference";
+        const string hintPathAttributeName = "HintPath";
+        const string referenceNodeName = "Reference";
         const string packagesNodeName = "packages";
         const string packageAttributeName = "package";
         const string versionAttributeName = "version";
@@ -35,7 +37,7 @@ namespace ripple.Commands
         {
             SemanticVersion version;
             var projectToOldPackageVersion = new Dictionary<Project, string>();
-            var textWriter = Console.Out; // ? new StringWriter();
+            var textWriter = input.VerboseFlag? Console.Out : new StringWriter();
             using(textWriter)
             {
                 if (SemanticVersion.TryParse(input.DesiredVersion, out version))
@@ -75,7 +77,7 @@ namespace ripple.Commands
 
                         var repoBuilder = new PackageRepositoryBuilder();
                         var aggregateRepository = repoBuilder.BuildRemote(new [] { "http://packages.nuget.org/v1/FeedService.svc/", "http://nuget.org/api/v2" });
-                        var requiredPackageVersion = aggregateRepository.FindPackagesById(input.DesiredVersion).FirstOrDefault(x => x.Version == version);
+                        var requiredPackageVersion = aggregateRepository.FindPackagesById(input.PackageId).FirstOrDefault(x => x.Version == version);
 
                         foreach (var assemblyReference in requiredPackageVersion.AssemblyReferences)
                         {
