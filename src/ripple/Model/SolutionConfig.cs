@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Xml.Serialization;
 using FubuCore;
 using System.Linq;
@@ -17,12 +18,13 @@ namespace ripple.Model
             SourceFolder = "src";
             BuildCommand = "rake";
             FastBuildCommand = "rake compile";
+            PackagesFolder = Path.Combine(SourceFolder, "packages");
         } 
 
         public string Name { get; set; }
         public string NugetSpecFolder { get; set; }
         public string SourceFolder { get; set; } // look for packages.config underneath this
-
+        public string PackagesFolder { get; set; }
 
         public string BuildCommand { get; set; }
         public string FastBuildCommand { get; set; }
@@ -76,8 +78,6 @@ namespace ripple.Model
             return fileSystem.FileExists(file) 
                 ? fileSystem.LoadFromFile<SolutionConfig>(file) 
                 : null;
-            
-            
         }
 
         public string GetSolutionFolder(string directory)

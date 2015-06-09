@@ -56,6 +56,7 @@ namespace ripple.Model
             SourceFolder = "src";
             BuildCommand = "rake";
             FastBuildCommand = "rake compile";
+            PackagesFolder = System.IO.Path.Combine(SourceFolder, "packages");
             Mode = SolutionMode.Ripple;
             Groups = new List<DependencyGroup>();
             Nuspecs = new List<NuspecMap>();
@@ -83,6 +84,7 @@ namespace ripple.Model
         public string SourceFolder { get; set; }
         public string BuildCommand { get; set; }
         public string FastBuildCommand { get; set; }
+        public string PackagesFolder { get; set; }
         
         public string NugetCacheDirectory
         {
@@ -371,7 +373,7 @@ namespace ripple.Model
 
         public string PackagesDirectory()
         {
-            return Directory.AppendPath(SourceFolder, "packages").ToFullPath();
+            return Directory.AppendPath(PackagesFolder).ToFullPath();
         }
 
         public Task<NugetResult> Restore(Dependency dependency)
